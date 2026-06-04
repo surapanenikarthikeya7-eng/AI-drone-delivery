@@ -1,0 +1,161 @@
+from collections import deque
+
+# ---------------- GRAPH ----------------
+
+graph = {
+    'A': [('B', 4), ('C', 2)],
+    'B': [('A', 4), ('C', 1), ('D', 5), ('E', 3)],
+    'C': [('A', 2), ('B', 1), ('E', 8)],
+    'D': [('B', 5), ('E', 2)],
+    'E': [('B', 3), ('C', 8), ('D', 2)]
+}
+
+# ---------------- BFS ----------------
+
+def bfs(start):
+    visited = set()
+    queue = deque([start])
+    result = []
+
+    while queue:
+        node = queue.popleft()
+
+        if node not in visited:
+            visited.add(node)
+            result.append(node)
+
+            for neighbor, _ in graph[node]:
+                queue.append(neighbor)
+
+    return result
+
+# ---------------- DFS ----------------
+
+def dfs(node, visited=None, result=None):
+
+    if visited is None:
+        visited = set()
+
+    if result is None:
+        result = []
+
+    visited.add(node)
+    result.append(node)
+
+    for neighbor, _ in graph[node]:
+        if neighbor not in visited:
+            dfs(neighbor, visited, result)
+
+    return result
+
+# ---------------- KRUSKAL ----------------
+
+parent = {}
+rank = {}
+
+def make_set(v):
+    parent[v] = v
+    rank[v] = 0
+
+def find(v):
+    if parent[v] != v:
+        parent[v] = find(parent[v])
+    return parent[v]
+
+def union(a, b):
+    a = find(a)
+    b = find(b)
+
+    if a != b:
+        if rank[a] < rank[b]:
+            parent[a] = b
+        else:
+            parent[b] = a
+
+            if rank[a] == rank[b]:
+                rank[a] += 1
+
+def kruskal():
+
+    edges = []
+
+    for node in graph:
+        for neighbor, weight in graph[node]:
+            if (weight, neighbor, node) not in edges:
+                edges.append((weight, node, neighbor))
+
+    edges.sort()
+
+    for vertex in graph:
+        make_set(vertex)
+
+    mst = []
+    cost = 0
+
+    for weight, u, v in edges:
+
+        if find(u) != find(v):
+            union(u, v)
+            mst.append((u, v, weight))
+            cost += weight
+
+    return mst, cost
+
+# ---------------- PRIM ----------------
+
+def prim():
+
+    visited = set()
+    start = 'A'
+    visited.add(start)
+
+    edges = []
+
+    for neighbor, weight in graph[start]:
+        edges.append((weight, start, neighbor))
+
+    mst = []
+    cost = 0
+
+    while edges:
+
+        edges.sort()
+        weight, u, v = edges.pop(0)
+
+        if v not in visited:
+
+            visited.add(v)
+
+            mst.append((u, v, weight))
+            cost += weight
+
+            for next_node, next_weight in graph[v]:
+
+                if next_node not in visited:
+                    edges.append((next_weight, v, next_node))
+
+    return mst, cost
+
+# ---------------- RESULTS ----------------
+
+print("BFS Traversal:")
+print(bfs('A'))
+
+print("\nDFS Traversal:")
+print(dfs('A'))
+
+kruskal_mst, kruskal_cost = kruskal()
+
+print("\nKruskal MST:")
+for edge in kruskal_mst:
+    print(edge)
+
+print("Total Cost =", kruskal_cost)
+
+prim_mst, prim_cost = prim()
+
+print("\nPrim MST:")
+for edge in prim_mst:
+    print(edge)
+
+print("Total Cost =", prim_cost)
