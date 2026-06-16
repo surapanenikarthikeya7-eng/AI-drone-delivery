@@ -1,0 +1,203 @@
+class DroneNode {
+    int packageId, height;
+    String location;
+    DroneNode left, right;
+
+    DroneNode(int packageId, String location) {
+        this.packageId = packageId;
+        this.location = location;
+        this.height = 1;
+    }
+}
+
+public class AIDroneDeliveryAVL {
+
+    DroneNode root;
+
+    int height(DroneNode node) {
+        return node == null ? 0 : node.height;
+    }
+
+    int getBalance(DroneNode node) {
+        return node == null ? 0 : height(node.left) - height(node.right);
+    }
+
+    DroneNode rightRotate(DroneNode y) {
+        DroneNode x = y.left;
+        DroneNode T2 = x.right;
+
+        x.right = y;
+        y.left = T2;
+
+        y.height = Math.max(height(y.left), height(y.right)) + 1;
+        x.height = Math.max(height(x.left), height(x.right)) + 1;
+
+        return x;
+    }
+
+    DroneNode leftRotate(DroneNode x) {
+        DroneNode y = x.right;
+        DroneNode T2 = y.left;
+
+        y.left = x;
+        x.right = T2;
+
+        x.height = Math.max(height(x.left), height(x.right)) + 1;
+        y.height = Math.max(height(y.left), height(y.right)) + 1;
+
+        return y;
+    }
+
+    DroneNode insert(DroneNode node, int packageId, String location) {
+
+        if (node == null)
+            return new DroneNode(packageId, location);
+
+        if (packageId < node.packageId)
+            node.left = insert(node.left, packageId, location);
+        else if (packageId > node.packageId)
+            node.right = insert(node.right, packageId, location);
+        else
+            return node;
+
+        node.height = 1 + Math.max(height(node.left), height(node.right));
+
+        int balance = getBalance(node);
+
+        // LL Rotation
+        if (balance > 1 && packageId < node.left.packageId)
+            return rightRotate(node);
+
+        // RR Rotation
+        if (balance < -1 && packageId > node.right.packageId)
+            return leftRotate(node);
+
+        // LR Rotation
+        if (balance > 1 && packageId > node.left.packageId) {
+            node.left = leftRotate(node.left);
+            return rightRotate(node);
+        }
+
+        // RL Rotation
+        if (balance < -1 && packageId < node.right.packageId) {
+            node.right = rightRotate(node.right);
+            return leftRotate(node);
+        }
+
+        return node;
+    }
+
+    DroneNode search(DroneNode node, int packageId) {
+        if (node == null || node.packageId == packageId)
+            return node;
+
+        if (packageId < node.packageId)
+            return search(node.left, packageId);
+
+        return search(node.right, packageId);
+    }
+
+    DroneNode minValueNode(DroneNode node) {
+        DroneNode current = node;
+
+        while (current.left != null)
+            current = current.left;
+
+        return current;
+    }
+
+    DroneNode delete(DroneNode root, int packageId) {
+
+        if (root == null)
+            return root;
+
+        if (packageId < root.packageId)
+            root.left = delete(root.left, packageId);
+
+        else if (packageId > root.packageId)
+            root.right = delete(root.right, packageId);
+
+        else {
+
+            if ((root.left == null) || (root.right == null)) {
+                DroneNode temp = (root.left != null) ? root.left : root.right;
+
+                if (temp == null) {
+                    root = null;
+                } else {
+                    root = temp;
+                }
+            } else {
+
+                DroneNode temp = minValueNode(root.right);
+
+                root.packageId = temp.packageId;
+                root.location = temp.location;
+
+                root.right = delete(root.right, temp.packageId);
+            }
+        }
+
+        if (root == null)
+            return root;
+
+        root.height = Math.max(height(root.left), height(root.right)) + 1;
+
+        int balance = getBalance(root);
+
+        if (balance > 1 && getBalance(root.left) >= 0)
+            return rightRotate(root);
+
+        if (balance > 1 && getBalance(root.left) < 0) {
+            root.left = leftRotate(root.left);
+            return rightRotate(root);
+        }
+
+        if (balance < -1 && getBalance(root.right) <= 0)
+            return leftRotate(root);
+
+        if (balance < -1 && getBalance(root.right) > 0) {
+            root.right = rightRotate(root.right);
+            return leftRotate(root);
+        }
+
+        return root;
+    }
+
+    void inorder(DroneNode node) {
+        if (node != null) {
+            inorder(node.left);
+            System.out.println("Package ID: " + node.packageId +
+                    " -> Location: " + node.location);
+            inorder(node.right);
+        }
+    }
+
+    public static void main(String[] args) {
+
+        AIDroneDeliveryAVL system = new AIDroneDeliveryAVL();
+
+        system.root = system.insert(system.root, 101, "Hyderabad");
+        system.root = system.insert(system.root, 205, "Vijayawada");
+        system.root = system.insert(system.root, 150, "Visakhapatnam");
+        system.root = system.insert(system.root, 300, "Tirupati");
+        system.root = system.insert(system.root, 120, "Guntur");
+
+        System.out.println("Drone Delivery Records:");
+        system.inorder(system.root);
+
+        System.out.println("\nSearching Package ID 150:");
+        DroneNode result = system.search(system.root, 150);
+
+        if (result != null)
+            System.out.println("Found at Location: " + result.location);
+        else
+            System.out.println("Package Not Found");
+
+        System.out.println("\nDeleting Package ID 205...");
+        system.root = system.delete(system.root, 205);
+
+        System.out.println("\nUpdated Records:");
+        system.inorder(system.root);
+    }
+}
