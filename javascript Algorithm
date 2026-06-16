@@ -1,9 +1,0 @@
-function assignDrone(drones) {
-    let available = drones.filter(
-        d => d.status === "Available" && d.battery > 30
-    );
-
-    available.sort((a, b) => b.battery - a.battery);
-
-    return available[0];
-}
